@@ -89,7 +89,7 @@ SELECT a.id AS a_id,
        
 FROM albums AS a
 JOIN bands b ON b.id = a.band_id
-JOIN public.labels l ON l.id = a.label_id
+LEFT JOIN labels l ON l.id = a.label_id
 WHERE a.id = ?;
 """);
             st.setInt(1, albumId);
