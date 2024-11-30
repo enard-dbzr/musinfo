@@ -14,9 +14,11 @@ public class Main {
         var albumRepository = new AlbumRepository(dbConnectionFactory);
         var labelRepository = new LabelRepository(dbConnectionFactory);
         var labelContractsRepository = new LabelContractsRepository(dbConnectionFactory);
+        var tracksRepository = new TracksRepository(dbConnectionFactory);
 
         var formsController = new Controller(dbConnectionFactory, userRepository, bandRepository, bandRepository,
-                bandMembersRepository, albumRepository, labelContractsRepository, labelRepository);
+                bandMembersRepository, albumRepository, labelContractsRepository, labelRepository, albumRepository,
+                tracksRepository);
 
         formsController.start();
     }

@@ -18,9 +18,12 @@ public class BandRepository implements SearchBandsPort, GetBandByIdPort {
         this.dbConnectionFactory = dbConnectionFactory;
     }
 
-    static Band ConstructBand(ResultSet resultSet) throws SQLException {
-        return new Band(resultSet.getInt("id"),
-                resultSet.getString("name"), resultSet.getString("description"));
+    static Band ConstructBand(String prefix, ResultSet resultSet) throws SQLException {
+        var fStr = prefix != null ? prefix + "_%s" : "%s";
+
+        return new Band(resultSet.getInt(fStr.formatted("id")),
+                resultSet.getString(fStr.formatted("name")),
+                resultSet.getString(fStr.formatted("description")));
     }
 
     @Override
@@ -34,7 +37,7 @@ public class BandRepository implements SearchBandsPort, GetBandByIdPort {
             var resultSet = st.executeQuery();
 
             while (resultSet.next()) {
-                res.add(ConstructBand(resultSet));
+                res.add(ConstructBand(null, resultSet));
             }
         } catch (SQLException e) {
             throw new DbError(e.getMessage());
@@ -52,7 +55,7 @@ public class BandRepository implements SearchBandsPort, GetBandByIdPort {
             var resultSet = st.executeQuery();
 
             resultSet.next();
-            return ConstructBand(resultSet);
+            return ConstructBand(null, resultSet);
 
         } catch (SQLException e) {
             throw new DbError(e.getMessage());

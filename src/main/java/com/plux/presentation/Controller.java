@@ -2,6 +2,8 @@ package com.plux.presentation;
 
 import com.plux.domain.model.User;
 import com.plux.port.api.*;
+import com.plux.port.api.album.GetAlbumByIdPort;
+import com.plux.port.api.album.GetAlbumTracksPort;
 import com.plux.port.api.band.*;
 import com.plux.port.api.label.GetLabelByIdPort;
 
@@ -20,6 +22,8 @@ public class Controller {
     private final GetBandAlbumsPort getBandAlbumsPort;
     private final GetBandContractsPort getBandContractsPort;
     private final GetLabelByIdPort getLabelByIdPort;
+    private final GetAlbumByIdPort getAlbumByIdPort;
+    private final GetAlbumTracksPort getAlbumTracksPort;
 
     UUID userId;
     User user;
@@ -33,7 +37,9 @@ public class Controller {
                       GetBandMembersPort getBandMembersPort,
                       GetBandAlbumsPort getBandAlbumsPort,
                       GetBandContractsPort getBandContractsPort,
-                      GetLabelByIdPort getLabelByIdPort) {
+                      GetLabelByIdPort getLabelByIdPort,
+                      GetAlbumByIdPort getAlbumByIdPort,
+                      GetAlbumTracksPort getAlbumTracksPort) {
 
         this.authPort = authPort;
         this.getUserByIdPort = getUserByIdPort;
@@ -43,6 +49,8 @@ public class Controller {
         this.getBandAlbumsPort = getBandAlbumsPort;
         this.getBandContractsPort = getBandContractsPort;
         this.getLabelByIdPort = getLabelByIdPort;
+        this.getAlbumByIdPort = getAlbumByIdPort;
+        this.getAlbumTracksPort = getAlbumTracksPort;
 
         loadFonts();
 
@@ -74,7 +82,9 @@ public class Controller {
     }
 
     void viewAlbum(Integer albumId) {
+        var albumOverviewForm = new AlbumOverviewForm(this, albumId, getAlbumByIdPort, getAlbumTracksPort);
 
+        albumOverviewForm.setVisible(true);
     }
 
     void viewLabel(Integer labelId) {

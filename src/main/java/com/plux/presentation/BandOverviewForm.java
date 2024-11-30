@@ -91,9 +91,21 @@ class BandOverviewForm extends JDialog {
                 }
             }
         });
+        albumsList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+
+                if (e.getClickCount() == 2) {
+                    var albumItem = (AlbumListItem)albumsList.getSelectedValue();
+
+                    controller.viewAlbum(albumItem.album().id());
+                }
+            }
+        });
     }
 
-    private void updateData() {
+    void updateData() {
         var band = getBandByIdPort.GetBandById(controller.userId, bandId);
 
         bandNameTextField.setText(band.name());
