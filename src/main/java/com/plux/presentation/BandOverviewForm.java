@@ -103,6 +103,19 @@ class BandOverviewForm extends JDialog {
                 }
             }
         });
+        membersTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+
+                if (e.getClickCount() == 2) {
+                    var model = (BandMembersTableModel)membersTable.getModel();
+
+                    var member = model.members.get(membersTable.getSelectedRow());
+                    controller.viewMember(member.id());
+                }
+            }
+        });
     }
 
     void updateData() {
@@ -137,7 +150,8 @@ record AlbumListItem(Album album) {
 class BandMembersTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Имя", "Роль", "Начало", "Конец"};
     private final static DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT, Locale.of("ru"));
-    private final List<BandMember> members;
+
+    final List<BandMember> members;
 
     public BandMembersTableModel(List<BandMember> members) {
         this.members = members;
