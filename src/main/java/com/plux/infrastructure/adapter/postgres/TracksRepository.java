@@ -3,6 +3,7 @@ package com.plux.infrastructure.adapter.postgres;
 import com.plux.domain.model.*;
 import com.plux.port.api.DbError;
 import com.plux.port.api.album.GetAlbumTracksPort;
+import com.plux.port.api.track.GetTrackByIdPort;
 import org.postgresql.util.PGInterval;
 
 import java.sql.ResultSet;
@@ -11,7 +12,7 @@ import java.time.Duration;
 import java.time.temporal.TemporalAmount;
 import java.util.*;
 
-public class TracksRepository implements GetAlbumTracksPort {
+public class TracksRepository implements GetAlbumTracksPort, GetTrackByIdPort {
     private final DbConnectionFactory dbConnectionFactory;
 
     public TracksRepository(DbConnectionFactory dbConnectionFactory) {
@@ -60,5 +61,21 @@ WHERE tia.album_id = ?
             throw new DbError(e.getMessage());
         }
         return res;
+    }
+
+    @Override
+    public Track getTrackById(UUID userId, Integer trackId) {
+        try {
+            var con = dbConnectionFactory.getConnection(userId);
+            var st = con.prepareStatement("SELECT * FROM tracks WHERE id = ?");
+            st.setInt(1, trackId);
+            var resultSet = st.executeQuery();
+
+            resultSet.next();
+            return ConstructTrack(null, resultSet);
+
+        } catch (SQLException e) {
+            throw new DbError(e.getMessage());
+        }
     }
 }

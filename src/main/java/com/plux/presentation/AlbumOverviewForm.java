@@ -8,6 +8,8 @@ import com.plux.port.api.album.GetAlbumTracksPort;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class AlbumOverviewForm  extends JFrame {
@@ -44,6 +46,18 @@ public class AlbumOverviewForm  extends JFrame {
         updateData();
 
         pack();
+
+        tracksTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+
+                if (e.getClickCount() == 2) {
+                    var model = (TrackTitleDurationTableModel) tracksTable.getModel();
+                    controller.viewTrack(model.tracks.get(tracksTable.getSelectedRow()).id());
+                }
+            }
+        });
     }
 
     void updateData() {

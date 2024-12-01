@@ -7,6 +7,8 @@ import com.plux.port.api.album.GetAlbumTracksPort;
 import com.plux.port.api.band.*;
 import com.plux.port.api.label.GetLabelByIdPort;
 import com.plux.port.api.member.GetMemberByIdPort;
+import com.plux.port.api.track.GetTrackAuthorsPort;
+import com.plux.port.api.track.GetTrackByIdPort;
 
 import java.awt.*;
 import java.io.IOException;
@@ -26,6 +28,8 @@ public class Controller {
     private final GetAlbumByIdPort getAlbumByIdPort;
     private final GetAlbumTracksPort getAlbumTracksPort;
     private final GetMemberByIdPort getMemberByIdPort;
+    private final GetTrackByIdPort getTrackByIdPort;
+    private final GetTrackAuthorsPort getTrackAuthorsPort;
 
     UUID userId;
     User user;
@@ -42,7 +46,9 @@ public class Controller {
                       GetLabelByIdPort getLabelByIdPort,
                       GetAlbumByIdPort getAlbumByIdPort,
                       GetAlbumTracksPort getAlbumTracksPort,
-                      GetMemberByIdPort getMemberByIdPort) {
+                      GetMemberByIdPort getMemberByIdPort,
+                      GetTrackByIdPort getTrackByIdPort,
+                      GetTrackAuthorsPort getTrackAuthorsPort) {
 
         this.authPort = authPort;
         this.getUserByIdPort = getUserByIdPort;
@@ -55,6 +61,8 @@ public class Controller {
         this.getAlbumByIdPort = getAlbumByIdPort;
         this.getAlbumTracksPort = getAlbumTracksPort;
         this.getMemberByIdPort = getMemberByIdPort;
+        this.getTrackByIdPort = getTrackByIdPort;
+        this.getTrackAuthorsPort = getTrackAuthorsPort;
 
         loadFonts();
 
@@ -101,6 +109,12 @@ public class Controller {
         var memberOverviewForm = new MemberOverviewForm(this, memberId, getMemberByIdPort);
 
         memberOverviewForm.setVisible(true);
+    }
+
+    void viewTrack(Integer trackId) {
+        var trackOverviewForm = new TrackOverviewForm(this, trackId, getTrackByIdPort, getTrackAuthorsPort);
+
+        trackOverviewForm.setVisible(true);
     }
 
     private void loadFonts() {
