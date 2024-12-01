@@ -8,9 +8,12 @@ import com.plux.port.api.band.GetBandAlbumsPort;
 import com.plux.port.api.band.GetBandContractsPort;
 import com.plux.port.api.band.GetBandMembersPort;
 import com.plux.port.api.band.GetBandByIdPort;
+import com.plux.presentation.components.ScrollablePanel;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DateFormat;
@@ -38,6 +41,11 @@ class BandOverviewForm extends JDialog {
     private JPanel contractsHeaderPanel;
     private JPanel albumsManagePanel;
     private JPanel contractsManagePanel;
+    private JButton editButton;
+    private JButton removeButton;
+    private JPanel managePanel;
+    private JButton saveButton;
+    private JPanel scrollContentPanel;
 
     private final Controller controller;
     private final Integer bandId;
@@ -61,7 +69,6 @@ class BandOverviewForm extends JDialog {
 
         setTitle("Информация о группе");
         setContentPane(contentPanel);
-        setSize(640, 480);
         setLocationRelativeTo(null);
 
         membersHeaderPanel.add(membersTable.getTableHeader());
@@ -71,13 +78,12 @@ class BandOverviewForm extends JDialog {
         membersPanel.setVisible(showAdditionalPanels);
         contractsPanel.setVisible(showAdditionalPanels);
 
-        boolean showManagePanels = controller.user.role().equals(UserRole.MANAGER);
-        albumsManagePanel.setVisible(showManagePanels);
-        membersManagePanel.setVisible(showManagePanels);
-        contractsManagePanel.setVisible(showManagePanels);
-
+        managePanel.setVisible(controller.user.role().equals(UserRole.MANAGER));
 
         updateData();
+
+        pack();
+
         contractsTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -116,6 +122,19 @@ class BandOverviewForm extends JDialog {
                 }
             }
         });
+
+        editButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enterEditMode();
+            }
+        });
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                save();
+            }
+        });
     }
 
     void updateData() {
@@ -136,6 +155,37 @@ class BandOverviewForm extends JDialog {
         }
 
     }
+
+    private void setEditing(boolean enable) {
+        bandNameTextField.setEditable(enable);
+        descriptionTextArea.setEditable(enable);
+        if (membersTable.getModel() instanceof BandMembersTableModel model) {
+            model.editable = enable;
+        }
+        if (contractsTable.getModel() instanceof ContractsTableModel model) {
+            model.editable = enable;
+        }
+
+        albumsManagePanel.setVisible(enable);
+        membersManagePanel.setVisible(enable);
+        contractsManagePanel.setVisible(enable);
+
+        editButton.setVisible(!enable);
+        removeButton.setVisible(!enable);
+        saveButton.setVisible(enable);
+    }
+
+    void enterEditMode() {
+        setEditing(true);
+    }
+
+    void save() {
+        setEditing(false);
+    }
+
+    private void createUIComponents() {
+        scrollContentPanel = new ScrollablePanel();
+    }
 }
 
 
@@ -151,6 +201,7 @@ class BandMembersTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Имя", "Роль", "Начало", "Конец"};
     private final static DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT, Locale.of("ru"));
 
+    boolean editable = false;
     final List<BandMember> members;
 
     public BandMembersTableModel(List<BandMember> members) {
@@ -187,8 +238,7 @@ class BandMembersTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-//        return columnIndex > 0;
-        return false;
+        return editable && columnIndex > 0;
     }
 
 //    @Override
@@ -209,6 +259,8 @@ class ContractsTableModel extends AbstractTableModel {
     private final static DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT, Locale.of("ru"));
 
     final List<LabelContract> contracts;
+
+    boolean editable = false;
 
     public ContractsTableModel(List<LabelContract> contracts) {
         this.contracts = contracts;
@@ -245,6 +297,6 @@ class ContractsTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex > 0;
+        return editable && columnIndex > 0;
     }
 }
