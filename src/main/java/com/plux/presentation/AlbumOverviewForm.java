@@ -1,16 +1,14 @@
 package com.plux.presentation;
 
-import com.plux.domain.model.Band;
-import com.plux.domain.model.Label;
-import com.plux.domain.model.Track;
 import com.plux.port.api.album.GetAlbumByIdPort;
 import com.plux.port.api.album.GetAlbumTracksPort;
+import com.plux.presentation.models.BandListItem;
+import com.plux.presentation.models.LabelListItem;
+import com.plux.presentation.models.TrackTitleDurationTableModel;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 
 public class AlbumOverviewForm  extends JFrame {
     private JTextField titleTextField;
@@ -64,8 +62,8 @@ public class AlbumOverviewForm  extends JFrame {
         var album = getAlbumByIdPort.getAlbumById(controller.userId, albumId);
 
         titleTextField.setText(album.title());
-        bandComboBox.setSelectedItem(new BandComboItem(album.band()));
-        labelComboBox.setSelectedItem(new LabelComboItem(album.label()));
+        bandComboBox.setSelectedItem(new BandListItem(album.band()));
+        labelComboBox.setSelectedItem(new LabelListItem(album.label()));
         typeComboBox.setSelectedIndex(switch (album.albumType()) {
             case SINGLE -> 0;
             case MINI_ALBUM -> 1;
@@ -78,52 +76,4 @@ public class AlbumOverviewForm  extends JFrame {
     }
 }
 
-record BandComboItem(Band band) {
-    @Override
-    public String toString() {
-        return band.name();
-    }
-}
 
-record LabelComboItem(Label label) {
-    @Override
-    public String toString() {
-        return label.name();
-    }
-}
-
-
-class TrackTitleDurationTableModel extends AbstractTableModel {
-    private final String[] columnNames = {"Название", "Длительность"};
-
-    final List<Track> tracks;
-
-    public TrackTitleDurationTableModel(List<Track> tracks) {
-        this.tracks = tracks;
-    }
-
-    @Override
-    public int getRowCount() {
-        return tracks.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return columnNames.length;
-    }
-
-    @Override
-    public String getColumnName(int column) {
-        return columnNames[column];
-    }
-
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        return switch (columnIndex) {
-            case 0 -> tracks.get(rowIndex).title();
-            case 1 -> "%d:%02d".formatted(tracks.get(rowIndex).duration().toMinutes(),
-                    tracks.get(rowIndex).duration().toSecondsPart());
-            default -> throw new IllegalStateException("Unexpected value: " + columnIndex);
-        };
-    }
-}

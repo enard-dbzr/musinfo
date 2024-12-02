@@ -51,7 +51,7 @@ public class LabelContractsRepository implements GetBandContractsPort {
                     labelcontracts.band_id = ?;
                 """);
 
-            st.setInt(1, band.id());
+            st.setInt(1, band.getId());
             var resultSet = st.executeQuery();
 
             while (resultSet.next()) {

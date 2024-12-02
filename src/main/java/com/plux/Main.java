@@ -20,7 +20,8 @@ public class Main {
 
         var formsController = new Controller(dbConnectionFactory, userRepository, bandRepository, bandRepository,
                 bandMembersRepository, albumRepository, labelContractsRepository, labelRepository, albumRepository,
-                tracksRepository, memberRepository, tracksRepository, trackAuthorsRepository);
+                tracksRepository, memberRepository, tracksRepository, trackAuthorsRepository, bandRepository,
+                memberRepository, bandMembersRepository, bandMembersRepository);
 
         formsController.start();
     }

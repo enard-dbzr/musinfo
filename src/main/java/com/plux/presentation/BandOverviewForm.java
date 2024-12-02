@@ -1,23 +1,17 @@
 package com.plux.presentation;
 
-import com.plux.domain.model.Album;
-import com.plux.domain.model.BandMember;
-import com.plux.domain.model.LabelContract;
-import com.plux.domain.model.UserRole;
-import com.plux.port.api.band.GetBandAlbumsPort;
-import com.plux.port.api.band.GetBandContractsPort;
-import com.plux.port.api.band.GetBandMembersPort;
-import com.plux.port.api.band.GetBandByIdPort;
+import com.plux.domain.model.*;
+import com.plux.port.api.band.*;
 import com.plux.presentation.components.ScrollablePanel;
+import com.plux.presentation.models.*;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
+import javax.swing.text.MaskFormatter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.DateFormat;
-import java.util.*;
+import java.text.ParseException;
 
 class BandOverviewForm extends JDialog {
     private JPanel contentPanel;
@@ -28,7 +22,7 @@ class BandOverviewForm extends JDialog {
     private JTable contractsTable;
     private JPanel contractsPanel;
     private JButton addMemberButton;
-    private JButton deleteMemberButton;
+    private JButton removeMemberButton;
     private JButton CreateMemberButton;
     private JPanel membersManagePanel;
     private JPanel descriptionPanel;
@@ -48,24 +42,40 @@ class BandOverviewForm extends JDialog {
     private JPanel scrollContentPanel;
 
     private final Controller controller;
-    private final Integer bandId;
+    private Band band;
     private final GetBandByIdPort getBandByIdPort;
     private final GetBandMembersPort getBandMembersPort;
     private final GetBandAlbumsPort getBandAlbumsPort;
     private final GetBandContractsPort getBandContractsPort;
+    private final SaveBandPort saveBandPort;
+    private final GetAllMembersPort getAllMembersPort;
+    private final SaveBandMemberPort saveBandMemberPort;
+    private final RemoveBandMemberPort removeBandMemberPort;
+
+    private BandMembersTableModel bandMembersTableModel = new BandMembersTableModel();
+    private final ContractsTableModel contractsTableModel = new ContractsTableModel();
+
 
     public BandOverviewForm(Controller controller,
-                            Integer bandId,
+                            Band band,
                             GetBandByIdPort getBandByIdPort,
                             GetBandMembersPort getBandMembersPort,
                             GetBandAlbumsPort getBandAlbumsPort,
-                            GetBandContractsPort getBandContractsPort) {
+                            GetBandContractsPort getBandContractsPort,
+                            SaveBandPort saveBandPort,
+                            GetAllMembersPort getAllMembersPort,
+                            SaveBandMemberPort saveBandMemberPort,
+                            RemoveBandMemberPort removeBandMemberPort) {
         this.controller = controller;
-        this.bandId = bandId;
+        this.band = band;
         this.getBandByIdPort = getBandByIdPort;
         this.getBandMembersPort = getBandMembersPort;
         this.getBandAlbumsPort = getBandAlbumsPort;
         this.getBandContractsPort = getBandContractsPort;
+        this.saveBandPort = saveBandPort;
+        this.getAllMembersPort = getAllMembersPort;
+        this.saveBandMemberPort = saveBandMemberPort;
+        this.removeBandMemberPort = removeBandMemberPort;
 
         setTitle("Информация о группе");
         setContentPane(contentPanel);
@@ -73,12 +83,27 @@ class BandOverviewForm extends JDialog {
 
         membersHeaderPanel.add(membersTable.getTableHeader());
         contractsHeaderPanel.add(contractsTable.getTableHeader());
+        membersTable.setModel(bandMembersTableModel);
+        contractsTable.setModel(contractsTableModel);
 
         boolean showAdditionalPanels = !controller.user.role().equals(UserRole.GUEST);
         membersPanel.setVisible(showAdditionalPanels);
         contractsPanel.setVisible(showAdditionalPanels);
 
         managePanel.setVisible(controller.user.role().equals(UserRole.MANAGER));
+
+        try {
+            var dateFormatter = new MaskFormatter("##.##.####");
+            dateFormatter.setPlaceholderCharacter('_');
+
+            var dateTextField = new JFormattedTextField(dateFormatter);
+
+            membersTable.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(dateTextField));
+            membersTable.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(dateTextField));
+
+            contractsTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(dateTextField));
+            contractsTable.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(dateTextField));
+        } catch (ParseException _) {}
 
         updateData();
 
@@ -90,9 +115,7 @@ class BandOverviewForm extends JDialog {
                 super.mouseClicked(e);
 
                 if (e.getClickCount() == 2) {
-                    var model = (ContractsTableModel)contractsTable.getModel();
-
-                    var contract = model.contracts.get(contractsTable.getSelectedRow());
+                    var contract = contractsTableModel.contracts.get(contractsTable.getSelectedRow());
                     controller.viewLabel(contract.label().id());
                 }
             }
@@ -115,10 +138,8 @@ class BandOverviewForm extends JDialog {
                 super.mouseClicked(e);
 
                 if (e.getClickCount() == 2) {
-                    var model = (BandMembersTableModel)membersTable.getModel();
-
-                    var member = model.members.get(membersTable.getSelectedRow());
-                    controller.viewMember(member.id());
+                    var member = bandMembersTableModel.members.get(membersTable.getSelectedRow());
+                    controller.viewMember(member.getId());
                 }
             }
         });
@@ -135,25 +156,49 @@ class BandOverviewForm extends JDialog {
                 save();
             }
         });
+
+        addMemberButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                bandMembersTableModel.addEmptyRow();
+            }
+        });
+        removeMemberButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                bandMembersTableModel.deleteRow(membersTable.getSelectedRow());
+            }
+        });
     }
 
     void updateData() {
-        var band = getBandByIdPort.GetBandById(controller.userId, bandId);
+        if (controller.user.role().equals(UserRole.MANAGER)) {
+            var members = getAllMembersPort.getAllMembers(controller.userId);
 
-        bandNameTextField.setText(band.name());
-        descriptionTextArea.setText(band.description());
+            var membersCombo = new JComboBox<>(members.stream().map(MemberListItem::new).toArray());
+            membersTable.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(membersCombo));
+        }
+
+        if (band == null) return;
+
+        band = getBandByIdPort.GetBandById(controller.userId, band.getId());
+
+        bandNameTextField.setText(band.getName());
+        descriptionTextArea.setText(band.getDescription());
 
         var albums = getBandAlbumsPort.getBandAlbums(controller.userId, band);
         albumsList.setListData(albums.stream().map(AlbumListItem::new).toArray());
 
         if (!controller.user.role().equals(UserRole.GUEST)) {
             var bandMembers = getBandMembersPort.getBandMembers(controller.userId, band);
-            membersTable.setModel(new BandMembersTableModel(bandMembers));
+            bandMembersTableModel.reset(bandMembers);
 
             var bandContracts = getBandContractsPort.getBandContracts(controller.userId, band);
-            contractsTable.setModel(new ContractsTableModel(bandContracts));
-        }
+            contractsTableModel.setContracts(bandContracts);
 
+            membersTable.setModel(bandMembersTableModel);
+            contractsTable.setModel(contractsTableModel);
+        }
     }
 
     private void setEditing(boolean enable) {
@@ -175,12 +220,34 @@ class BandOverviewForm extends JDialog {
         saveButton.setVisible(enable);
     }
 
+    private void setCreating(boolean enable) {
+        albumsPanel.setVisible(!enable);
+        membersPanel.setVisible(!enable);
+        contractsPanel.setVisible(!enable);
+    }
+
     void enterEditMode() {
         setEditing(true);
     }
 
     void save() {
+        if (band == null)
+            band = new Band();
+
+        band.setName(bandNameTextField.getText());
+        band.setDescription(descriptionTextArea.getText());
+
+        band = saveBandPort.saveBand(controller.userId, band);
+
+        for (var bm : bandMembersTableModel.getModified(band)) {
+            saveBandMemberPort.saveBandMember(controller.userId, bm);
+        }
+        for (var bm : bandMembersTableModel.getRemoved(band)) {
+            removeBandMemberPort.removeBandMember(controller.userId, bm);
+        }
+
         setEditing(false);
+        updateData();
     }
 
     private void createUIComponents() {
@@ -189,114 +256,3 @@ class BandOverviewForm extends JDialog {
 }
 
 
-record AlbumListItem(Album album) {
-    @Override
-    public String toString() {
-        return album.title();
-    }
-}
-
-
-class BandMembersTableModel extends AbstractTableModel {
-    private final String[] columnNames = {"Имя", "Роль", "Начало", "Конец"};
-    private final static DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT, Locale.of("ru"));
-
-    boolean editable = false;
-    final List<BandMember> members;
-
-    public BandMembersTableModel(List<BandMember> members) {
-        this.members = members;
-    }
-
-    @Override
-    public int getRowCount() {
-        return members.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return columnNames.length;
-    }
-
-    @Override
-    public String getColumnName(int column) {
-        return columnNames[column];
-    }
-
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        var ed = members.get(rowIndex).endDate();
-        var border = new GregorianCalendar(3000, Calendar.JANUARY, 1);
-        return switch (columnIndex) {
-            case 0 -> members.get(rowIndex).member().displayName();
-            case 1 -> members.get(rowIndex).role();
-            case 2 -> df.format(members.get(rowIndex).startDate());
-            case 3 -> ed.equals(border.getTime()) ? "-" : df.format(ed);
-            default -> throw new IllegalStateException("Unexpected value: " + columnIndex);
-        };
-    }
-
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return editable && columnIndex > 0;
-    }
-
-//    @Override
-//    public void setValueAt(Object value, int rowIndex, int columnIndex) {
-//        data.get(rowIndex)[columnIndex] = value;
-//        fireTableCellUpdated(rowIndex, columnIndex);
-//    }
-//
-//    public void addEmptyRow() {
-//        data.add(new Object[]{"", "", new Date(), new Date()});
-//        fireTableRowsInserted(data.size() - 1, data.size() - 1);
-//    }
-}
-
-
-class ContractsTableModel extends AbstractTableModel {
-    private final String[] columnNames = {"Лейбл", "Начало", "Конец"};
-    private final static DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT, Locale.of("ru"));
-
-    final List<LabelContract> contracts;
-
-    boolean editable = false;
-
-    public ContractsTableModel(List<LabelContract> contracts) {
-        this.contracts = contracts;
-    }
-
-    @Override
-    public int getRowCount() {
-        return contracts.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return columnNames.length;
-    }
-
-    @Override
-    public String getColumnName(int column) {
-        return columnNames[column];
-    }
-
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        var endDate = contracts.get(rowIndex).endDate();
-
-        var border = new GregorianCalendar(3000, Calendar.JANUARY, 1);
-
-        return switch (columnIndex) {
-            case 0 -> contracts.get(rowIndex).label().name();
-            case 1 -> df.format(contracts.get(rowIndex).startDate());
-            case 2 -> endDate.equals(border.getTime()) ? "-" : df.format(endDate);
-            default -> throw new IllegalStateException("Unexpected value: " + columnIndex);
-        };
-    }
-
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return editable && columnIndex > 0;
-    }
-}

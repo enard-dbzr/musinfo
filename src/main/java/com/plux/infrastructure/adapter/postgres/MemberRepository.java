@@ -1,14 +1,18 @@
 package com.plux.infrastructure.adapter.postgres;
 
+import com.plux.domain.model.Band;
 import com.plux.domain.model.Member;
 import com.plux.port.api.DbError;
+import com.plux.port.api.band.GetAllMembersPort;
 import com.plux.port.api.member.GetMemberByIdPort;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
-public class MemberRepository implements GetMemberByIdPort {
+public class MemberRepository implements GetMemberByIdPort, GetAllMembersPort {
     private final DbConnectionFactory dbConnectionFactory;
 
     static Member ConstructMember(String prefix, ResultSet resultSet) throws SQLException {
@@ -40,5 +44,24 @@ public class MemberRepository implements GetMemberByIdPort {
         } catch (SQLException e) {
             throw new DbError(e.getMessage());
         }
+    }
+
+    @Override
+    public List<Member> getAllMembers(UUID userId) {
+        var res = new ArrayList<Member>();
+
+        try {
+            var con = dbConnectionFactory.getConnection(userId);
+            var st = con.prepareStatement("SELECT * FROM members");
+            var resultSet = st.executeQuery();
+
+            while (resultSet.next()) {
+                res.add(ConstructMember(null, resultSet));
+            }
+        } catch (SQLException e) {
+            throw new DbError(e.getMessage());
+        }
+
+        return res;
     }
 }

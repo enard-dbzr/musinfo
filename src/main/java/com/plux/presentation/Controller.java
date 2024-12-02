@@ -1,5 +1,6 @@
 package com.plux.presentation;
 
+import com.plux.domain.model.Band;
 import com.plux.domain.model.User;
 import com.plux.port.api.*;
 import com.plux.port.api.album.GetAlbumByIdPort;
@@ -30,6 +31,10 @@ public class Controller {
     private final GetMemberByIdPort getMemberByIdPort;
     private final GetTrackByIdPort getTrackByIdPort;
     private final GetTrackAuthorsPort getTrackAuthorsPort;
+    private final SaveBandPort saveBandPort;
+    private final GetAllMembersPort getAllMembersPort;
+    private final SaveBandMemberPort saveBandMemberPort;
+    private final RemoveBandMemberPort removeBandMemberPort;
 
     UUID userId;
     User user;
@@ -48,7 +53,11 @@ public class Controller {
                       GetAlbumTracksPort getAlbumTracksPort,
                       GetMemberByIdPort getMemberByIdPort,
                       GetTrackByIdPort getTrackByIdPort,
-                      GetTrackAuthorsPort getTrackAuthorsPort) {
+                      GetTrackAuthorsPort getTrackAuthorsPort,
+                      SaveBandPort saveBandPort,
+                      GetAllMembersPort getAllMembersPort,
+                      SaveBandMemberPort saveBandMemberPort,
+                      RemoveBandMemberPort removeBandMemberPort) {
 
         this.authPort = authPort;
         this.getUserByIdPort = getUserByIdPort;
@@ -63,6 +72,10 @@ public class Controller {
         this.getMemberByIdPort = getMemberByIdPort;
         this.getTrackByIdPort = getTrackByIdPort;
         this.getTrackAuthorsPort = getTrackAuthorsPort;
+        this.saveBandPort = saveBandPort;
+        this.getAllMembersPort = getAllMembersPort;
+        this.saveBandMemberPort = saveBandMemberPort;
+        this.removeBandMemberPort = removeBandMemberPort;
 
         loadFonts();
 
@@ -86,11 +99,13 @@ public class Controller {
         mainForm.setVisible(true);
     }
 
-    void viewBand(Integer bandId) {
-        var bandOverviewForm = new BandOverviewForm(this, bandId, getBandByIdPort, getBandMembersPort,
-                getBandAlbumsPort, getBandContractsPort);
+    BandOverviewForm viewBand(Band band) {
+        var bandOverviewForm = new BandOverviewForm(this, band, getBandByIdPort, getBandMembersPort,
+                getBandAlbumsPort, getBandContractsPort, saveBandPort, getAllMembersPort, saveBandMemberPort,
+                removeBandMemberPort);
 
         bandOverviewForm.setVisible(true);
+        return bandOverviewForm;
     }
 
     void viewAlbum(Integer albumId) {

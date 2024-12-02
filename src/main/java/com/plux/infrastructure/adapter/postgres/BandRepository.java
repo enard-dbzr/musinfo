@@ -4,14 +4,16 @@ import com.plux.domain.model.Band;
 import com.plux.port.api.band.GetBandByIdPort;
 import com.plux.port.api.SearchBandsPort;
 import com.plux.port.api.DbError;
+import com.plux.port.api.band.SaveBandPort;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class BandRepository implements SearchBandsPort, GetBandByIdPort {
+public class BandRepository implements SearchBandsPort, GetBandByIdPort, SaveBandPort {
     private final DbConnectionFactory dbConnectionFactory;
 
     public BandRepository(DbConnectionFactory dbConnectionFactory) {
@@ -56,6 +58,40 @@ public class BandRepository implements SearchBandsPort, GetBandByIdPort {
 
             resultSet.next();
             return ConstructBand(null, resultSet);
+
+        } catch (SQLException e) {
+            throw new DbError(e.getMessage());
+        }
+    }
+
+    @Override
+    public Band saveBand(UUID userId, Band band) {
+        boolean create = band.getId() == null;
+
+        try {
+            var con = dbConnectionFactory.getConnection(userId);
+            if (create) {
+                var st = con.prepareStatement("INSERT INTO bands (name, description) VALUES (?, ?) RETURNING id");
+
+                st.setString(1, band.getName());
+                st.setString(2, band.getDescription());
+
+                var resultSet = st.executeQuery();
+
+                resultSet.next();
+
+                return new Band(resultSet.getInt("id"), band.getName(), band.getDescription());
+            } else {
+                var st = con.prepareStatement("UPDATE bands SET name = ?, description = ? WHERE id = ?");
+
+                st.setString(1, band.getName());
+                st.setString(2, band.getDescription());
+                st.setInt(3, band.getId());
+
+                st.executeUpdate();
+
+                return band;
+            }
 
         } catch (SQLException e) {
             throw new DbError(e.getMessage());

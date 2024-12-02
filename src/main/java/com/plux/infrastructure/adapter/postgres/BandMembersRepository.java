@@ -5,14 +5,17 @@ import com.plux.domain.model.BandMember;
 import com.plux.domain.model.Member;
 import com.plux.port.api.DbError;
 import com.plux.port.api.band.GetBandMembersPort;
+import com.plux.port.api.band.RemoveBandMemberPort;
+import com.plux.port.api.band.SaveBandMemberPort;
 
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class BandMembersRepository implements GetBandMembersPort {
+public class BandMembersRepository implements GetBandMembersPort, SaveBandMemberPort, RemoveBandMemberPort {
     private final DbConnectionFactory dbConnectionFactory;
 
     public BandMembersRepository(DbConnectionFactory dbConnectionFactory) {
@@ -57,7 +60,7 @@ public class BandMembersRepository implements GetBandMembersPort {
                 
                 """);
 
-            st.setInt(1, band.id());
+            st.setInt(1, band.getId());
             var resultSet = st.executeQuery();
 
             while (resultSet.next()) {
@@ -69,5 +72,65 @@ public class BandMembersRepository implements GetBandMembersPort {
         }
 
         return res;
+    }
+
+    @Override
+    public BandMember saveBandMember(UUID userId, BandMember bandMember) {
+        boolean create = bandMember.getId() == null;
+
+        try {
+            var con = dbConnectionFactory.getConnection(userId);
+            if (create) {
+                var st = con.prepareStatement("""
+INSERT INTO bandmembers (member_id, band_id, role, start_date, end_date) VALUES (?, ?, ?, ?, ?) RETURNING id
+""");
+
+                st.setInt(1, bandMember.getMember().id());
+                st.setInt(2, bandMember.getBand().getId());
+                st.setString(3, bandMember.getRole());
+                st.setDate(4, new Date(bandMember.getStartDate().getTime()));
+                st.setDate(5, new Date(bandMember.getEndDate().getTime()));
+
+
+                var resultSet = st.executeQuery();
+
+                resultSet.next();
+
+                return new BandMember(resultSet.getInt("id"), bandMember.getBand(),
+                        bandMember.getMember(), bandMember.getRole(), bandMember.getStartDate(), bandMember.getEndDate());
+            } else {
+                var st = con.prepareStatement("""
+UPDATE bandmembers SET member_id = ?, band_id = ?, role = ?, start_date = ?, end_date = ? WHERE id = ?""");
+
+                st.setInt(1, bandMember.getMember().id());
+                st.setInt(2, bandMember.getBand().getId());
+                st.setString(3, bandMember.getRole());
+                st.setDate(4, new Date(bandMember.getStartDate().getTime()));
+                st.setDate(5, new Date(bandMember.getEndDate().getTime()));
+                st.setInt(6, bandMember.getId());
+
+                st.executeUpdate();
+
+                return bandMember;
+            }
+
+        } catch (SQLException e) {
+            throw new DbError(e.getMessage());
+        }
+    }
+
+    @Override
+    public void removeBandMember(UUID userId, BandMember bandMember) {
+        try {
+            var con = dbConnectionFactory.getConnection(userId);
+
+            var st = con.prepareStatement("DELETE FROM bandmembers WHERE id = ?");
+
+            st.setInt(1, bandMember.getId());
+
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw new DbError(e.getMessage());
+        }
     }
 }
