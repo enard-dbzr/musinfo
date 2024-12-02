@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Queue;
 
 public class MemberOverviewForm extends JFrame {
     private JPanel contentPanel;
@@ -76,11 +77,11 @@ public class MemberOverviewForm extends JFrame {
     }
 
     void updateData() {
-        member = getMemberByIdPort.getMemberById(controller.userId, member.id());
+        member = getMemberByIdPort.getMemberById(controller.userId, member.id);
 
-        dispNameTextField.setText(member.displayName());
-        nameTextField.setText(member.name());
-        birthdayTextField.setValue(member.birthday());
-        countryTextField.setValue(member.countryCode());
+        dispNameTextField.setText(member.displayName);
+        nameTextField.setText(member.name);
+        birthdayTextField.setValue(member.birthday);
+        countryTextField.setValue(member.countryCode);
     }
 }

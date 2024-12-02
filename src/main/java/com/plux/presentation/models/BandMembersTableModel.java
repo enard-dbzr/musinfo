@@ -64,7 +64,7 @@ public class BandMembersTableModel extends AbstractTableModel {
         var ed = members.get(rowIndex).getEndDate();
         var border = new GregorianCalendar(3000, Calendar.JANUARY, 1);
         return switch (columnIndex) {
-            case 0 -> members.get(rowIndex).getMember() == null ? "" : members.get(rowIndex).getMember().displayName();
+            case 0 -> members.get(rowIndex).getMember() == null ? "" : members.get(rowIndex).getMember().displayName;
             case 1 -> members.get(rowIndex).getRole();
             case 2 -> df.format(members.get(rowIndex).getStartDate());
             case 3 -> ed.equals(border.getTime()) ? null : df.format(ed);
