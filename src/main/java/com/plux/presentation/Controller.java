@@ -8,7 +8,9 @@ import com.plux.port.api.album.GetAlbumByIdPort;
 import com.plux.port.api.album.GetAlbumTracksPort;
 import com.plux.port.api.band.*;
 import com.plux.port.api.label.GetLabelByIdPort;
+import com.plux.port.api.member.DeleteMemberPort;
 import com.plux.port.api.member.GetMemberByIdPort;
+import com.plux.port.api.member.SaveMemberPort;
 import com.plux.port.api.track.GetTrackAuthorsPort;
 import com.plux.port.api.track.GetTrackByIdPort;
 
@@ -39,6 +41,8 @@ public class Controller {
     private final GetAllLabelsPort getAllLabelsPort;
     private final SaveLabelContractPort saveLabelContractPort;
     private final DeleteLabelContractPort deleteLabelContractPort;
+    private final SaveMemberPort saveMemberPort;
+    private final DeleteMemberPort deleteMemberPort;
 
     UUID userId;
     User user;
@@ -64,7 +68,9 @@ public class Controller {
                       RemoveBandMemberPort removeBandMemberPort,
                       GetAllLabelsPort getAllLabelsPort,
                       SaveLabelContractPort saveLabelContractPort,
-                      DeleteLabelContractPort deleteLabelContractPort) {
+                      DeleteLabelContractPort deleteLabelContractPort,
+                      SaveMemberPort saveMemberPort,
+                      DeleteMemberPort deleteMemberPort) {
 
         this.authPort = authPort;
         this.getUserByIdPort = getUserByIdPort;
@@ -86,6 +92,8 @@ public class Controller {
         this.getAllLabelsPort = getAllLabelsPort;
         this.saveLabelContractPort = saveLabelContractPort;
         this.deleteLabelContractPort = deleteLabelContractPort;
+        this.saveMemberPort = saveMemberPort;
+        this.deleteMemberPort = deleteMemberPort;
 
         loadFonts();
 
@@ -130,10 +138,11 @@ public class Controller {
         labelOverviewForm.setVisible(true);
     }
 
-    void viewMember(Member member) {
-        var memberOverviewForm = new MemberOverviewForm(this, member, getMemberByIdPort);
+    MemberOverviewForm viewMember(Member member) {
+        var memberOverviewForm = new MemberOverviewForm(this, member, getMemberByIdPort, saveMemberPort, deleteMemberPort);
 
         memberOverviewForm.setVisible(true);
+        return memberOverviewForm;
     }
 
     void viewTrack(Integer trackId) {
