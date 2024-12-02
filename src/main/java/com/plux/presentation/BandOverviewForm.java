@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.ParseException;
+import java.util.function.Consumer;
 
 class BandOverviewForm extends JDialog {
     private JPanel contentPanel;
@@ -23,7 +24,7 @@ class BandOverviewForm extends JDialog {
     private JPanel contractsPanel;
     private JButton addMemberButton;
     private JButton removeMemberButton;
-    private JButton CreateMemberButton;
+    private JButton createMemberButton;
     private JPanel membersManagePanel;
     private JPanel descriptionPanel;
     private JPanel membersPanel;
@@ -57,6 +58,8 @@ class BandOverviewForm extends JDialog {
 
     private BandMembersTableModel bandMembersTableModel = new BandMembersTableModel();
     private final ContractsTableModel contractsTableModel = new ContractsTableModel();
+
+    public Consumer<Band> createModelEventListener;
 
 
     public BandOverviewForm(Controller controller,
@@ -166,17 +169,15 @@ class BandOverviewForm extends JDialog {
             }
         });
 
-        addMemberButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                bandMembersTableModel.addEmptyRow();
-            }
-        });
-        removeMemberButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                bandMembersTableModel.deleteRow(membersTable.getSelectedRow());
-            }
+        addMemberButton.addActionListener(e -> bandMembersTableModel.addEmptyRow());
+        removeMemberButton.addActionListener(e -> bandMembersTableModel.deleteRow(membersTable.getSelectedRow()));
+        createMemberButton.addActionListener(e -> {
+            var memberForm = controller.viewMember(null);
+            memberForm.setEditing(true);
+            memberForm.createModelEventListener = member -> {
+                memberForm.setVisible(false);
+                bandMembersTableModel.addRowWithMember(member);
+            };
         });
 
         addContractButton.addActionListener(new ActionListener() {
@@ -259,6 +260,9 @@ class BandOverviewForm extends JDialog {
         band.description = description;
 
         band = saveBandPort.saveBand(controller.userId, band);
+
+        if (createModelEventListener != null)
+            createModelEventListener.accept(band);
 
         for (var bm : bandMembersTableModel.getModified(band)) {
             saveBandMemberPort.saveBandMember(controller.userId, bm);

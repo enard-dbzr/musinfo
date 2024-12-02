@@ -2,6 +2,7 @@ package com.plux.presentation.models;
 
 import com.plux.domain.model.Band;
 import com.plux.domain.model.BandMember;
+import com.plux.domain.model.Member;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -102,7 +103,7 @@ public class BandMembersTableModel extends AbstractTableModel {
         modified.add(members.get(rowIndex));
     }
 
-    public void addEmptyRow() {
+    public int addEmptyRow() {
         var member = new BandMember();
         members.add(member);
         modified.add(member);
@@ -110,6 +111,15 @@ public class BandMembersTableModel extends AbstractTableModel {
         var i = members.size() - 1;
         fireTableRowsInserted(i, i);
         createdRows.add(i);
+        return i;
+    }
+
+    public int addRowWithMember(Member member) {
+        var i = addEmptyRow();
+        createdRows.remove(i);
+
+        members.get(i).setMember(member);
+        return i;
     }
 
     public void deleteRow(int row) {

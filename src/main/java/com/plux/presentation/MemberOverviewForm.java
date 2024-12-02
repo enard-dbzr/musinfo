@@ -14,7 +14,7 @@ import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Queue;
+import java.util.function.Consumer;
 
 public class MemberOverviewForm extends JFrame {
     private JPanel contentPanel;
@@ -32,6 +32,8 @@ public class MemberOverviewForm extends JFrame {
     private final GetMemberByIdPort getMemberByIdPort;
     private final SaveMemberPort saveMemberPort;
     private final DeleteMemberPort deleteMemberPort;
+
+    public Consumer<Member> createModelEventListener;
 
     public MemberOverviewForm(Controller controller,
                               Member member,
@@ -90,12 +92,18 @@ public class MemberOverviewForm extends JFrame {
     }
 
     void save() {
+        if(member == null)
+            member = new Member();
+
         member.displayName = dispNameTextField.getText();
         member.name = nameTextField.getText();
         member.birthday = (Date) birthdayTextField.getValue();
         member.countryCode = (String) countryTextField.getValue();
 
         member = saveMemberPort.saveMember(controller.userId, member);
+
+        if (createModelEventListener != null)
+            createModelEventListener.accept(member);
 
         setEditing(false);
         updateData();
