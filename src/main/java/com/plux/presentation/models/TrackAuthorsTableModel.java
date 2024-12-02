@@ -32,7 +32,7 @@ public class TrackAuthorsTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         return switch (columnIndex) {
-            case 0 -> tracksAuthors.get(rowIndex).band().getName();
+            case 0 -> tracksAuthors.get(rowIndex).band().name;
             case 1 -> tracksAuthors.get(rowIndex).role();
             default -> throw new IllegalStateException("Unexpected value: " + columnIndex);
         };

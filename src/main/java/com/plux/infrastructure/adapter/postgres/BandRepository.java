@@ -6,7 +6,6 @@ import com.plux.port.api.SearchBandsPort;
 import com.plux.port.api.DbError;
 import com.plux.port.api.band.SaveBandPort;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -66,27 +65,27 @@ public class BandRepository implements SearchBandsPort, GetBandByIdPort, SaveBan
 
     @Override
     public Band saveBand(UUID userId, Band band) {
-        boolean create = band.getId() == null;
+        boolean create = band.id == null;
 
         try {
             var con = dbConnectionFactory.getConnection(userId);
             if (create) {
                 var st = con.prepareStatement("INSERT INTO bands (name, description) VALUES (?, ?) RETURNING id");
 
-                st.setString(1, band.getName());
-                st.setString(2, band.getDescription());
+                st.setString(1, band.name);
+                st.setString(2, band.description);
 
                 var resultSet = st.executeQuery();
 
                 resultSet.next();
 
-                return new Band(resultSet.getInt("id"), band.getName(), band.getDescription());
+                return new Band(resultSet.getInt("id"), band.name, band.description);
             } else {
                 var st = con.prepareStatement("UPDATE bands SET name = ?, description = ? WHERE id = ?");
 
-                st.setString(1, band.getName());
-                st.setString(2, band.getDescription());
-                st.setInt(3, band.getId());
+                st.setString(1, band.name);
+                st.setString(2, band.description);
+                st.setInt(3, band.id);
 
                 st.executeUpdate();
 

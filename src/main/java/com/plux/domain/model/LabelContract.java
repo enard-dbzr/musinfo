@@ -2,14 +2,6 @@ package com.plux.domain.model;
 
 import java.util.Date;
 
-//public record LabelContract(
-//        Integer id,
-//        Band band,
-//        Label label,
-//        Date startDate,
-//        Date endDate
-//) {
-//}
 
 public class LabelContract {
     public final Integer id;

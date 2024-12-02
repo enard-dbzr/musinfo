@@ -60,7 +60,7 @@ public class BandMembersRepository implements GetBandMembersPort, SaveBandMember
                 
                 """);
 
-            st.setInt(1, band.getId());
+            st.setInt(1, band.id);
             var resultSet = st.executeQuery();
 
             while (resultSet.next()) {
@@ -86,7 +86,8 @@ INSERT INTO bandmembers (member_id, band_id, role, start_date, end_date) VALUES 
 """);
 
                 st.setInt(1, bandMember.getMember().id());
-                st.setInt(2, bandMember.getBand().getId());
+                Band band = bandMember.getBand();
+                st.setInt(2, band.id);
                 st.setString(3, bandMember.getRole());
                 st.setDate(4, new Date(bandMember.getStartDate().getTime()));
                 st.setDate(5, new Date(bandMember.getEndDate().getTime()));
@@ -103,7 +104,8 @@ INSERT INTO bandmembers (member_id, band_id, role, start_date, end_date) VALUES 
 UPDATE bandmembers SET member_id = ?, band_id = ?, role = ?, start_date = ?, end_date = ? WHERE id = ?""");
 
                 st.setInt(1, bandMember.getMember().id());
-                st.setInt(2, bandMember.getBand().getId());
+                Band band = bandMember.getBand();
+                st.setInt(2, band.id);
                 st.setString(3, bandMember.getRole());
                 st.setDate(4, new Date(bandMember.getStartDate().getTime()));
                 st.setDate(5, new Date(bandMember.getEndDate().getTime()));

@@ -55,7 +55,7 @@ public class LabelContractsRepository implements GetBandContractsPort, SaveLabel
                     labelcontracts.band_id = ?;
                 """);
 
-            st.setInt(1, band.getId());
+            st.setInt(1, band.id);
             var resultSet = st.executeQuery();
 
             while (resultSet.next()) {
@@ -80,7 +80,7 @@ public class LabelContractsRepository implements GetBandContractsPort, SaveLabel
 INSERT INTO labelcontracts (band_id, label_id, start_date, end_date) VALUES (?, ?, ?, ?) RETURNING id
 """);
 
-                st.setInt(1, labelContract.band.getId());
+                st.setInt(1, labelContract.band.id);
                 st.setInt(2, labelContract.label.id());
                 st.setDate(3, new Date(labelContract.startDate.getTime()));
                 st.setDate(4, new Date(labelContract.endDate.getTime()));
@@ -96,7 +96,7 @@ INSERT INTO labelcontracts (band_id, label_id, start_date, end_date) VALUES (?, 
                 var st = con.prepareStatement("""
 UPDATE labelcontracts SET band_id = ?, label_id = ?, start_date = ?, end_date = ? WHERE id = ?""");
 
-                st.setInt(1, labelContract.band.getId());
+                st.setInt(1, labelContract.band.id);
                 st.setInt(2, labelContract.label.id());
                 st.setDate(3, new Date(labelContract.startDate.getTime()));
                 st.setDate(4, new Date(labelContract.endDate.getTime()));

@@ -54,7 +54,7 @@ public class AlbumRepository implements GetBandAlbumsPort, GetAlbumByIdPort {
                     albums.band_id = ?;
                 """);
 
-            st.setInt(1, band.getId());
+            st.setInt(1, band.id);
             var resultSet = st.executeQuery();
 
             while (resultSet.next()) {

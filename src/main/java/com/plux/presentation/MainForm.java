@@ -76,7 +76,7 @@ class MainForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 var form = controller.viewBand(null);
 
-                form.enterEditMode();
+                form.setEditing(true);
             }
         });
     }

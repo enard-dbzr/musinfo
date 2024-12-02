@@ -1,6 +1,7 @@
 package com.plux.presentation;
 
 import com.plux.domain.model.Band;
+import com.plux.domain.model.Member;
 import com.plux.domain.model.User;
 import com.plux.port.api.*;
 import com.plux.port.api.album.GetAlbumByIdPort;
@@ -129,8 +130,8 @@ public class Controller {
         labelOverviewForm.setVisible(true);
     }
 
-    void viewMember(Integer memberId) {
-        var memberOverviewForm = new MemberOverviewForm(this, memberId, getMemberByIdPort);
+    void viewMember(Member member) {
+        var memberOverviewForm = new MemberOverviewForm(this, member, getMemberByIdPort);
 
         memberOverviewForm.setVisible(true);
     }

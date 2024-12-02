@@ -148,7 +148,7 @@ class BandOverviewForm extends JDialog {
 
                 if (e.getClickCount() == 2) {
                     var bandMember = bandMembersTableModel.members.get(membersTable.getSelectedRow());
-                    controller.viewMember(bandMember.getMember().id());
+                    controller.viewMember(bandMember.getMember());
                 }
             }
         });
@@ -156,7 +156,7 @@ class BandOverviewForm extends JDialog {
         editButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                enterEditMode();
+                setEditing(true);
             }
         });
         saveButton.addActionListener(new ActionListener() {
@@ -207,10 +207,10 @@ class BandOverviewForm extends JDialog {
 
         if (band == null) return;
 
-        band = getBandByIdPort.GetBandById(controller.userId, band.getId());
+        band = getBandByIdPort.GetBandById(controller.userId, band.id);
 
-        bandNameTextField.setText(band.getName());
-        descriptionTextArea.setText(band.getDescription());
+        bandNameTextField.setText(band.name);
+        descriptionTextArea.setText(band.description);
 
         var albums = getBandAlbumsPort.getBandAlbums(controller.userId, band);
         albumsList.setListData(albums.stream().map(AlbumListItem::new).toArray());
@@ -224,7 +224,7 @@ class BandOverviewForm extends JDialog {
         }
     }
 
-    private void setEditing(boolean enable) {
+    void setEditing(boolean enable) {
         bandNameTextField.setEditable(enable);
         descriptionTextArea.setEditable(enable);
         if (membersTable.getModel() instanceof BandMembersTableModel model) {
@@ -243,22 +243,20 @@ class BandOverviewForm extends JDialog {
         saveButton.setVisible(enable);
     }
 
-    private void setCreating(boolean enable) {
+    void setCreating(boolean enable) {
         albumsPanel.setVisible(!enable);
         membersPanel.setVisible(!enable);
         contractsPanel.setVisible(!enable);
-    }
-
-    void enterEditMode() {
-        setEditing(true);
     }
 
     void save() {
         if (band == null)
             band = new Band();
 
-        band.setName(bandNameTextField.getText());
-        band.setDescription(descriptionTextArea.getText());
+        String name = bandNameTextField.getText();
+        band.name = name;
+        String description = descriptionTextArea.getText();
+        band.description = description;
 
         band = saveBandPort.saveBand(controller.userId, band);
 
