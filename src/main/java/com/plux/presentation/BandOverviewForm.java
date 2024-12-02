@@ -31,7 +31,7 @@ class BandOverviewForm extends JDialog {
     private JPanel albumsPanel;
     private JButton createAlbumButton;
     private JButton addContractButton;
-    private JButton deleteContractButton;
+    private JButton removeContractButton;
     private JPanel contractsHeaderPanel;
     private JPanel albumsManagePanel;
     private JPanel contractsManagePanel;
@@ -51,6 +51,9 @@ class BandOverviewForm extends JDialog {
     private final GetAllMembersPort getAllMembersPort;
     private final SaveBandMemberPort saveBandMemberPort;
     private final RemoveBandMemberPort removeBandMemberPort;
+    private final GetAllLabelsPort getAllLabelsPort;
+    private final SaveLabelContractPort saveLabelContractPort;
+    private final DeleteLabelContractPort deleteLabelContractPort;
 
     private BandMembersTableModel bandMembersTableModel = new BandMembersTableModel();
     private final ContractsTableModel contractsTableModel = new ContractsTableModel();
@@ -65,7 +68,10 @@ class BandOverviewForm extends JDialog {
                             SaveBandPort saveBandPort,
                             GetAllMembersPort getAllMembersPort,
                             SaveBandMemberPort saveBandMemberPort,
-                            RemoveBandMemberPort removeBandMemberPort) {
+                            RemoveBandMemberPort removeBandMemberPort,
+                            GetAllLabelsPort getAllLabelsPort,
+                            SaveLabelContractPort saveLabelContractPort,
+                            DeleteLabelContractPort deleteLabelContractPort){
         this.controller = controller;
         this.band = band;
         this.getBandByIdPort = getBandByIdPort;
@@ -76,6 +82,9 @@ class BandOverviewForm extends JDialog {
         this.getAllMembersPort = getAllMembersPort;
         this.saveBandMemberPort = saveBandMemberPort;
         this.removeBandMemberPort = removeBandMemberPort;
+        this.getAllLabelsPort = getAllLabelsPort;
+        this.saveLabelContractPort = saveLabelContractPort;
+        this.deleteLabelContractPort = deleteLabelContractPort;
 
         setTitle("Информация о группе");
         setContentPane(contentPanel);
@@ -116,7 +125,7 @@ class BandOverviewForm extends JDialog {
 
                 if (e.getClickCount() == 2) {
                     var contract = contractsTableModel.contracts.get(contractsTable.getSelectedRow());
-                    controller.viewLabel(contract.label().id());
+                    controller.viewLabel(contract.getLabel().id());
                 }
             }
         });
@@ -138,8 +147,8 @@ class BandOverviewForm extends JDialog {
                 super.mouseClicked(e);
 
                 if (e.getClickCount() == 2) {
-                    var member = bandMembersTableModel.members.get(membersTable.getSelectedRow());
-                    controller.viewMember(member.getId());
+                    var bandMember = bandMembersTableModel.members.get(membersTable.getSelectedRow());
+                    controller.viewMember(bandMember.getMember().id());
                 }
             }
         });
@@ -169,14 +178,31 @@ class BandOverviewForm extends JDialog {
                 bandMembersTableModel.deleteRow(membersTable.getSelectedRow());
             }
         });
+
+        addContractButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                contractsTableModel.addEmptyRow();
+            }
+        });
+        removeContractButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                contractsTableModel.deleteRow(contractsTable.getSelectedRow());
+            }
+        });
     }
 
     void updateData() {
         if (controller.user.role().equals(UserRole.MANAGER)) {
             var members = getAllMembersPort.getAllMembers(controller.userId);
+            var labels = getAllLabelsPort.getAllLabels(controller.userId);
 
             var membersCombo = new JComboBox<>(members.stream().map(MemberListItem::new).toArray());
+            var labelsCombo = new JComboBox<>(labels.stream().map(LabelListItem::new).toArray());
+
             membersTable.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(membersCombo));
+            contractsTable.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(labelsCombo));
         }
 
         if (band == null) return;
@@ -194,10 +220,7 @@ class BandOverviewForm extends JDialog {
             bandMembersTableModel.reset(bandMembers);
 
             var bandContracts = getBandContractsPort.getBandContracts(controller.userId, band);
-            contractsTableModel.setContracts(bandContracts);
-
-            membersTable.setModel(bandMembersTableModel);
-            contractsTable.setModel(contractsTableModel);
+            contractsTableModel.reset(bandContracts);
         }
     }
 
@@ -244,6 +267,12 @@ class BandOverviewForm extends JDialog {
         }
         for (var bm : bandMembersTableModel.getRemoved(band)) {
             removeBandMemberPort.removeBandMember(controller.userId, bm);
+        }
+        for (var lc : contractsTableModel.getModified(band)) {
+            saveLabelContractPort.saveLabelContract(controller.userId, lc);
+        }
+        for (var lc : contractsTableModel.getRemoved(band)) {
+            deleteLabelContractPort.deleteLabelContract(controller.userId, lc);
         }
 
         setEditing(false);

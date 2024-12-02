@@ -1,22 +1,48 @@
 package com.plux.presentation.models;
 
+import com.plux.domain.model.Band;
+import com.plux.domain.model.BandMember;
 import com.plux.domain.model.LabelContract;
 
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ContractsTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Лейбл", "Начало", "Конец"};
-    private final static DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT, Locale.of("ru"));
 
-    public List<LabelContract> contracts = new ArrayList<>();
+    public List<ContractTableItem> contracts = new ArrayList<>();
+
+    private final Set<ContractTableItem> modified  = new HashSet<>();
+    private final Set<ContractTableItem> removed = new HashSet<>();
+
+    private final Set<Integer> createdRows = new HashSet<>();
 
     public boolean editable = false;
 
-    public void setContracts(List<LabelContract> contracts) {
-        this.contracts.clear();
-        this.contracts = contracts;
+    public void reset(List<LabelContract> contracts) {
+        this.contracts = contracts.stream().map(ContractTableItem::from).collect(Collectors.toList());
+
+        modified.clear();
+        removed.clear();
+        createdRows.clear();
+    }
+
+    public List<LabelContract> getModified(Band band) {
+        return modified.stream().
+                filter(val -> !removed.contains(val)).
+                map(val -> val.constructModel(band)).
+                collect(Collectors.toList());
+    }
+
+    public List<LabelContract> getRemoved(Band band) {
+        return removed.stream().
+                filter(val -> val.constructModel(band).id != null).
+                map(val -> val.constructModel(band)).
+                collect(Collectors.toList());
     }
 
     @Override
@@ -36,20 +62,52 @@ public class ContractsTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        var endDate = contracts.get(rowIndex).endDate();
-
-        var border = new GregorianCalendar(3000, Calendar.JANUARY, 1);
-
         return switch (columnIndex) {
-            case 0 -> contracts.get(rowIndex).label().name();
-            case 1 -> df.format(contracts.get(rowIndex).startDate());
-            case 2 -> endDate.equals(border.getTime()) ? null : df.format(endDate);
+            case 0 -> contracts.get(rowIndex).getLabelName();
+            case 1 -> contracts.get(rowIndex).getStart();
+            case 2 -> contracts.get(rowIndex).getEnd();
             default -> throw new IllegalStateException("Unexpected value: " + columnIndex);
         };
     }
 
     @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        try {
+            if (columnIndex == 0 && aValue instanceof LabelListItem labelListItem) {
+                contracts.get(rowIndex).setLabel(labelListItem.label());
+            } else if (columnIndex == 1) {
+                contracts.get(rowIndex).setStart(aValue.toString());
+            } else if (columnIndex == 2) {
+                if (aValue.toString().equals("__.__.____"))
+                    return;
+
+                contracts.get(rowIndex).setEnd(aValue.toString());
+            }
+            modified.add(contracts.get(rowIndex));
+        } catch (ParseException e) {
+            JOptionPane.showMessageDialog(null, "Введите корректную дату");
+        }
+    }
+
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return editable && columnIndex > 0;
+        return editable && columnIndex > 0 || createdRows.contains(rowIndex);
+    }
+
+    public void addEmptyRow() {
+        var row = new ContractTableItem();
+        contracts.add(row);
+        modified.add(row);
+
+        var i = contracts.size() - 1;
+        fireTableRowsInserted(i, i);
+        createdRows.add(i);
+    }
+
+    public void deleteRow(int rowIndex) {
+        var row = contracts.get(rowIndex);
+        removed.add(row);
+        contracts.remove(row);
+        fireTableRowsDeleted(rowIndex, rowIndex);
     }
 }

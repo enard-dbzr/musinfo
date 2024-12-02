@@ -35,6 +35,9 @@ public class Controller {
     private final GetAllMembersPort getAllMembersPort;
     private final SaveBandMemberPort saveBandMemberPort;
     private final RemoveBandMemberPort removeBandMemberPort;
+    private final GetAllLabelsPort getAllLabelsPort;
+    private final SaveLabelContractPort saveLabelContractPort;
+    private final DeleteLabelContractPort deleteLabelContractPort;
 
     UUID userId;
     User user;
@@ -57,7 +60,10 @@ public class Controller {
                       SaveBandPort saveBandPort,
                       GetAllMembersPort getAllMembersPort,
                       SaveBandMemberPort saveBandMemberPort,
-                      RemoveBandMemberPort removeBandMemberPort) {
+                      RemoveBandMemberPort removeBandMemberPort,
+                      GetAllLabelsPort getAllLabelsPort,
+                      SaveLabelContractPort saveLabelContractPort,
+                      DeleteLabelContractPort deleteLabelContractPort) {
 
         this.authPort = authPort;
         this.getUserByIdPort = getUserByIdPort;
@@ -76,6 +82,9 @@ public class Controller {
         this.getAllMembersPort = getAllMembersPort;
         this.saveBandMemberPort = saveBandMemberPort;
         this.removeBandMemberPort = removeBandMemberPort;
+        this.getAllLabelsPort = getAllLabelsPort;
+        this.saveLabelContractPort = saveLabelContractPort;
+        this.deleteLabelContractPort = deleteLabelContractPort;
 
         loadFonts();
 
@@ -102,7 +111,7 @@ public class Controller {
     BandOverviewForm viewBand(Band band) {
         var bandOverviewForm = new BandOverviewForm(this, band, getBandByIdPort, getBandMembersPort,
                 getBandAlbumsPort, getBandContractsPort, saveBandPort, getAllMembersPort, saveBandMemberPort,
-                removeBandMemberPort);
+                removeBandMemberPort, getAllLabelsPort, saveLabelContractPort, deleteLabelContractPort);
 
         bandOverviewForm.setVisible(true);
         return bandOverviewForm;
