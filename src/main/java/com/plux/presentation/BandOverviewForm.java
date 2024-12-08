@@ -14,12 +14,12 @@ import java.awt.event.MouseEvent;
 import java.text.ParseException;
 import java.util.function.Consumer;
 
-class BandOverviewForm extends JDialog {
+class BandOverviewForm extends JFrame {
     private JPanel contentPanel;
     private JTextField bandNameTextField;
     private JTextArea descriptionTextArea;
     private JTable membersTable;
-    private JList albumsList;
+    private JList<AlbumListItem> albumsList;
     private JTable contractsTable;
     private JPanel contractsPanel;
     private JButton addMemberButton;
@@ -41,6 +41,7 @@ class BandOverviewForm extends JDialog {
     private JPanel managePanel;
     private JButton saveButton;
     private JPanel scrollContentPanel;
+    private JButton createLabelButton;
 
     private final Controller controller;
     private Band band;
@@ -60,7 +61,6 @@ class BandOverviewForm extends JDialog {
     private final ContractsTableModel contractsTableModel = new ContractsTableModel();
 
     public Consumer<Band> createModelEventListener;
-
 
     public BandOverviewForm(Controller controller,
                             Band band,
@@ -128,7 +128,7 @@ class BandOverviewForm extends JDialog {
 
                 if (e.getClickCount() == 2) {
                     var contract = contractsTableModel.contracts.get(contractsTable.getSelectedRow());
-                    controller.viewLabel(contract.getLabel().id());
+                    controller.viewLabel(contract.getLabel());
                 }
             }
         });
@@ -180,17 +180,15 @@ class BandOverviewForm extends JDialog {
             };
         });
 
-        addContractButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                contractsTableModel.addEmptyRow();
-            }
-        });
-        removeContractButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                contractsTableModel.deleteRow(contractsTable.getSelectedRow());
-            }
+        addContractButton.addActionListener(e -> contractsTableModel.addEmptyRow());
+        removeContractButton.addActionListener(e -> contractsTableModel.deleteRow(contractsTable.getSelectedRow()));
+        createLabelButton.addActionListener(e -> {
+            var labelForm = controller.viewLabel(null);
+            labelForm.setEditing(true);
+            labelForm.createLabelEventListener = label -> {
+                labelForm.setVisible(false);
+                contractsTableModel.addRowWithLabel(label);
+            };
         });
     }
 
@@ -214,7 +212,7 @@ class BandOverviewForm extends JDialog {
         descriptionTextArea.setText(band.description);
 
         var albums = getBandAlbumsPort.getBandAlbums(controller.userId, band);
-        albumsList.setListData(albums.stream().map(AlbumListItem::new).toArray());
+        albumsList.setListData(albums.stream().map(AlbumListItem::new).toArray((AlbumListItem[]::new)));
 
         if (!controller.user.role().equals(UserRole.GUEST)) {
             var bandMembers = getBandMembersPort.getBandMembers(controller.userId, band);
@@ -244,20 +242,12 @@ class BandOverviewForm extends JDialog {
         saveButton.setVisible(enable);
     }
 
-    void setCreating(boolean enable) {
-        albumsPanel.setVisible(!enable);
-        membersPanel.setVisible(!enable);
-        contractsPanel.setVisible(!enable);
-    }
-
     void save() {
         if (band == null)
             band = new Band();
 
-        String name = bandNameTextField.getText();
-        band.name = name;
-        String description = descriptionTextArea.getText();
-        band.description = description;
+        band.name = bandNameTextField.getText();
+        band.description = descriptionTextArea.getText();
 
         band = saveBandPort.saveBand(controller.userId, band);
 

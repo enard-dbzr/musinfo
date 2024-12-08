@@ -1,6 +1,7 @@
 package com.plux.presentation;
 
 import com.plux.domain.model.Band;
+import com.plux.domain.model.Label;
 import com.plux.domain.model.Member;
 import com.plux.domain.model.User;
 import com.plux.port.api.*;
@@ -8,6 +9,7 @@ import com.plux.port.api.album.GetAlbumByIdPort;
 import com.plux.port.api.album.GetAlbumTracksPort;
 import com.plux.port.api.band.*;
 import com.plux.port.api.label.GetLabelByIdPort;
+import com.plux.port.api.label.SaveLabelPort;
 import com.plux.port.api.member.DeleteMemberPort;
 import com.plux.port.api.member.GetMemberByIdPort;
 import com.plux.port.api.member.SaveMemberPort;
@@ -43,6 +45,7 @@ public class Controller {
     private final DeleteLabelContractPort deleteLabelContractPort;
     private final SaveMemberPort saveMemberPort;
     private final DeleteMemberPort deleteMemberPort;
+    private final SaveLabelPort saveLabelPort;
 
     UUID userId;
     User user;
@@ -70,7 +73,8 @@ public class Controller {
                       SaveLabelContractPort saveLabelContractPort,
                       DeleteLabelContractPort deleteLabelContractPort,
                       SaveMemberPort saveMemberPort,
-                      DeleteMemberPort deleteMemberPort) {
+                      DeleteMemberPort deleteMemberPort,
+                      SaveLabelPort saveLabelPort) {
 
         this.authPort = authPort;
         this.getUserByIdPort = getUserByIdPort;
@@ -94,6 +98,7 @@ public class Controller {
         this.deleteLabelContractPort = deleteLabelContractPort;
         this.saveMemberPort = saveMemberPort;
         this.deleteMemberPort = deleteMemberPort;
+        this.saveLabelPort = saveLabelPort;
 
         loadFonts();
 
@@ -132,10 +137,11 @@ public class Controller {
         albumOverviewForm.setVisible(true);
     }
 
-    void viewLabel(Integer labelId) {
-        var labelOverviewForm = new LabelOverviewForm(this, labelId, getLabelByIdPort);
+    LabelOverviewForm viewLabel(Label label) {
+        var labelOverviewForm = new LabelOverviewForm(this, label, getLabelByIdPort, saveLabelPort);
 
         labelOverviewForm.setVisible(true);
+        return labelOverviewForm;
     }
 
     MemberOverviewForm viewMember(Member member) {

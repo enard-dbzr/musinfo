@@ -81,7 +81,7 @@ INSERT INTO labelcontracts (band_id, label_id, start_date, end_date) VALUES (?, 
 """);
 
                 st.setInt(1, labelContract.band.id);
-                st.setInt(2, labelContract.label.id());
+                st.setInt(2, labelContract.label.id);
                 st.setDate(3, new Date(labelContract.startDate.getTime()));
                 st.setDate(4, new Date(labelContract.endDate.getTime()));
 
@@ -97,7 +97,7 @@ INSERT INTO labelcontracts (band_id, label_id, start_date, end_date) VALUES (?, 
 UPDATE labelcontracts SET band_id = ?, label_id = ?, start_date = ?, end_date = ? WHERE id = ?""");
 
                 st.setInt(1, labelContract.band.id);
-                st.setInt(2, labelContract.label.id());
+                st.setInt(2, labelContract.label.id);
                 st.setDate(3, new Date(labelContract.startDate.getTime()));
                 st.setDate(4, new Date(labelContract.endDate.getTime()));
                 st.setInt(5, labelContract.id);

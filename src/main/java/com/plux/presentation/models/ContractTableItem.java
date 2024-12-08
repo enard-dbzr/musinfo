@@ -22,7 +22,7 @@ public class ContractTableItem {
 
 
     public String getLabelName() {
-        return label != null ? label.name() : "";
+        return label != null ? label.name : "";
     }
 
     public Label getLabel() {

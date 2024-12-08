@@ -2,6 +2,7 @@ package com.plux.presentation.models;
 
 import com.plux.domain.model.Band;
 import com.plux.domain.model.BandMember;
+import com.plux.domain.model.Label;
 import com.plux.domain.model.LabelContract;
 
 import javax.swing.*;
@@ -94,7 +95,7 @@ public class ContractsTableModel extends AbstractTableModel {
         return editable && columnIndex > 0 || createdRows.contains(rowIndex);
     }
 
-    public void addEmptyRow() {
+    public int addEmptyRow() {
         var row = new ContractTableItem();
         contracts.add(row);
         modified.add(row);
@@ -102,6 +103,15 @@ public class ContractsTableModel extends AbstractTableModel {
         var i = contracts.size() - 1;
         fireTableRowsInserted(i, i);
         createdRows.add(i);
+        return i;
+    }
+
+    public int addRowWithLabel(Label label) {
+        var i = addEmptyRow();
+        createdRows.remove(i);
+
+        contracts.get(i).setLabel(label);
+        return i;
     }
 
     public void deleteRow(int rowIndex) {
