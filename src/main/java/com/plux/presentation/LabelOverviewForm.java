@@ -82,5 +82,6 @@ public class LabelOverviewForm extends JFrame {
             createLabelEventListener.accept(label);
 
         setEditing(false);
+        updateData();
     }
 }

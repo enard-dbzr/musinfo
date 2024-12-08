@@ -140,7 +140,7 @@ class BandOverviewForm extends JFrame {
                 if (e.getClickCount() == 2) {
                     var albumItem = (AlbumListItem)albumsList.getSelectedValue();
 
-                    controller.viewAlbum(albumItem.album().id());
+                    controller.viewAlbum(albumItem.album());
                 }
             }
         });

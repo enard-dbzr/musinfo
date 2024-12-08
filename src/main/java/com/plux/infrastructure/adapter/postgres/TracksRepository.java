@@ -51,7 +51,7 @@ JOIN tracks t ON t.id = tia.track_id
 WHERE tia.album_id = ?
 """);
 
-            st.setInt(1, album.id());
+            st.setInt(1, album.id);
             var resultSet = st.executeQuery();
 
             while (resultSet.next()) {

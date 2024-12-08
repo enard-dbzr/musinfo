@@ -1,12 +1,11 @@
 package com.plux.presentation;
 
-import com.plux.domain.model.Band;
+import com.plux.domain.model.*;
 import com.plux.domain.model.Label;
-import com.plux.domain.model.Member;
-import com.plux.domain.model.User;
 import com.plux.port.api.*;
 import com.plux.port.api.album.GetAlbumByIdPort;
 import com.plux.port.api.album.GetAlbumTracksPort;
+import com.plux.port.api.album.SaveAlbumPort;
 import com.plux.port.api.band.*;
 import com.plux.port.api.label.GetLabelByIdPort;
 import com.plux.port.api.label.SaveLabelPort;
@@ -46,6 +45,7 @@ public class Controller {
     private final SaveMemberPort saveMemberPort;
     private final DeleteMemberPort deleteMemberPort;
     private final SaveLabelPort saveLabelPort;
+    private final SaveAlbumPort saveAlbumPort;
 
     UUID userId;
     User user;
@@ -74,7 +74,8 @@ public class Controller {
                       DeleteLabelContractPort deleteLabelContractPort,
                       SaveMemberPort saveMemberPort,
                       DeleteMemberPort deleteMemberPort,
-                      SaveLabelPort saveLabelPort) {
+                      SaveLabelPort saveLabelPort,
+                      SaveAlbumPort saveAlbumPort) {
 
         this.authPort = authPort;
         this.getUserByIdPort = getUserByIdPort;
@@ -99,6 +100,7 @@ public class Controller {
         this.saveMemberPort = saveMemberPort;
         this.deleteMemberPort = deleteMemberPort;
         this.saveLabelPort = saveLabelPort;
+        this.saveAlbumPort = saveAlbumPort;
 
         loadFonts();
 
@@ -131,10 +133,12 @@ public class Controller {
         return bandOverviewForm;
     }
 
-    void viewAlbum(Integer albumId) {
-        var albumOverviewForm = new AlbumOverviewForm(this, albumId, getAlbumByIdPort, getAlbumTracksPort);
+    AlbumOverviewForm viewAlbum(Album album) {
+        var albumOverviewForm = new AlbumOverviewForm(this, album, getAlbumByIdPort,
+                getAlbumTracksPort, getAllLabelsPort, saveAlbumPort);
 
         albumOverviewForm.setVisible(true);
+        return albumOverviewForm;
     }
 
     LabelOverviewForm viewLabel(Label label) {

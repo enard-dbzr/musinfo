@@ -23,7 +23,7 @@ public class Main {
                 tracksRepository, memberRepository, tracksRepository, trackAuthorsRepository, bandRepository,
                 memberRepository, bandMembersRepository, bandMembersRepository, labelRepository,
                 labelContractsRepository, labelContractsRepository, memberRepository, memberRepository,
-                labelRepository);
+                labelRepository, albumRepository);
 
         formsController.start();
     }

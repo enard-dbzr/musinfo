@@ -3,15 +3,17 @@ package com.plux.infrastructure.adapter.postgres;
 import com.plux.domain.model.*;
 import com.plux.port.api.DbError;
 import com.plux.port.api.album.GetAlbumByIdPort;
+import com.plux.port.api.album.SaveAlbumPort;
 import com.plux.port.api.band.GetBandAlbumsPort;
 
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class AlbumRepository implements GetBandAlbumsPort, GetAlbumByIdPort {
+public class AlbumRepository implements GetBandAlbumsPort, GetAlbumByIdPort, SaveAlbumPort {
     private final DbConnectionFactory dbConnectionFactory;
 
     public AlbumRepository(DbConnectionFactory dbConnectionFactory) {
@@ -100,6 +102,56 @@ WHERE a.id = ?;
             var band = BandRepository.ConstructBand("b", resultSet);
             var label = LabelRepository.ConstructLabel("l", resultSet);
             return ConstructAlbum("a", resultSet, band, label);
+
+        } catch (SQLException e) {
+            throw new DbError(e.getMessage());
+        }
+    }
+
+    @Override
+    public Album saveAlbum(UUID userId, Album album) {
+
+        try {
+            var con = dbConnectionFactory.getConnection(userId);
+            if (album.id == null) {
+                var st = con.prepareStatement("""
+INSERT INTO albums (band_id, label_id, title, release_date, type) VALUES (?, ?, ?, ?, ?::album_type) RETURNING id
+""");
+
+                st.setInt(1, album.band.id);
+                st.setInt(2, album.label == null ? null : album.label.id);
+                st.setString(3, album.title);
+                st.setDate(4, album.releaseDate == null ? null : new Date(album.releaseDate.getTime()));
+                st.setString(5, switch (album.albumType) {
+                    case SINGLE -> "single";
+                    case MINI_ALBUM -> "mini-album";
+                    case AlBUM -> "album";
+                });
+
+                var resultSet = st.executeQuery();
+
+                resultSet.next();
+
+                return new Album(resultSet.getInt("id"), album.band, album.label,
+                        album.title, album.releaseDate, album.albumType);
+            } else {
+                var st = con.prepareStatement("""
+UPDATE albums SET label_id = ?, title = ?, release_date = ?, type = ?::album_type WHERE id = ?""");
+
+                st.setInt(1, album.label == null ? null : album.label.id);
+                st.setString(2, album.title);
+                st.setDate(3, album.releaseDate == null ? null : new Date(album.releaseDate.getTime()));
+                st.setString(4, switch (album.albumType) {
+                    case SINGLE -> "single";
+                    case MINI_ALBUM -> "mini-album";
+                    case AlBUM -> "album";
+                });
+                st.setInt(5, album.id);
+
+                st.executeUpdate();
+
+                return album;
+            }
 
         } catch (SQLException e) {
             throw new DbError(e.getMessage());
